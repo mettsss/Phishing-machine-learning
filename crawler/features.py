@@ -1,5 +1,6 @@
 import requests
 import codecs
+import pandas as pd
 from bs4 import BeautifulSoup
 
 
@@ -81,14 +82,19 @@ if __name__ == "__main__":
     for train_data in train_dataset:
         train_url = train_data['url']
         data_crawl(url=train_url, data=train_data)
-        print('train crawl {num1}, {num2} left'.format(num1=i, num2=len(train_dataset) - i))
+        print('train {num1}, {num2} left'.format(num1=i, num2=len(train_dataset) - i))
         i += 1
 
-    for test_data in test_dataset:
+    train_df = pd.DataFrame(train_dataset)
+    train_output_path = 'train.csv'
+    train_df.to_csv(train_output_path, sep=",", index=False, header=True)
+
+    for test_data in test_dataset[0:10000]:
         test_url = test_data['url']
         data_crawl(url=test_url, data=test_data)
-        print('test crawl {num1}, {num2}'.format(num1=j, num2=len(test_dataset) - j))
+        print('test {num1}, {num2} left'.format(num1=j, num2=len(test_dataset) - j))
         j += 1
 
-    print(train_dataset)
-    print(test_dataset)
+    test_df = pd.DataFrame(test_dataset)
+    test_output_path = 'test.csv'
+    test_df.to_csv(test_output_path, sep=",", index=False, header=True)
