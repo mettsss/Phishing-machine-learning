@@ -7,31 +7,50 @@ import requests
 from bs4 import BeautifulSoup
 import validators
 
-def ifEmail(site): # see if the site send email to his personal emailbox
+def ifEmail(site):
     try:
-        x=requests.get(url=site)
-        index1= x.content.find('mail()')
-        index2=x.content.find('mailto')
-        if index1 == -1 & index2 == -1:
+        x=requests.get(site,timeout = 5)
+    except:
+        return False
+    te=str(x.content)
+    index= te.find('mailto:')
+    if index == -1:
+        index1= te.find('mail()')
+        if index == -1:
             return True
         else:
             return False
-    except:
+    else:
         return False
+    '''start=0
+    while True:
+        index= te.find('mail'.encode(),start)
+        if index==-1:
+            return True
+        else:
+            index1=te.find('to:'.encode(),index+4,index+6)
+            index2=te.find('()'.encode(),index+4,index+5)
+            if  not index1 == -1:
+                return False
+            elif not index2 == -1:
+                return False
+            else:
+                start = index + 1
+                continue
+    return False'''#优化方法
       
-def is_valid_domain(site_name):# this is for BasedRank
+def is_valid_domain(site_name):
     if validators.domain(site_name):
         return True
     else:
         return False
       
-def BasedRank(url):# see traffic by Alexa Rank
-    if not is_valid_domain(url):
-        return False
+def BasedRank(url):
     alexaurl = 'https://alexa.com/siteinfo/'
     a=urlparse(url)
     site=a.netloc
-
+    if not is_valid_domain(site):
+        return False
     rank = alexaurl + site
 
     # Request formatted url for rank(s)
@@ -40,16 +59,20 @@ def BasedRank(url):# see traffic by Alexa Rank
 
     #country_ranks = soup.find_all('div', id='CountryRank')
     global_rank = soup.select('.rank-global .data')
-    try:
+    if global_rank:
         match = re.search(r'[\d,]+', global_rank[0].text.strip())
-        if match.group()<100000:
+        grank='0'
+        for cha in match.group():
+            if cha.isdecimal():
+                grank = grank + cha
+        if int(grank)<100000:
             return True
         else:
             return False
-    except:
+    else:
         return False
       
-def DNSrecord(url):# see if the DNS is recorded by WHOIS
+def DNSrecord(url):
     global flags
     flags = 0
     flags = flags | whois.NICClient.WHOIS_QUICK 
@@ -66,7 +89,7 @@ def DNSrecord(url):# see if the DNS is recorded by WHOIS
     else:
         return True
       
-def ifSubdomain(url):#see if the site has subdomain, False represents Phishing
+def ifSubdomain(url):#False represents Phishing
     a=urlparse(url)
     netlocation=a.netloc
     a=netlocation.replace('.','1')#remove dot from main domain
