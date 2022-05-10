@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import codecs
+
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import LinearSVC, SVC
@@ -17,12 +19,12 @@ def load_raw_dataset(filename=None):
     f = codecs.open(filename, 'r', 'utf-8', errors='replace')
     df = pd.read_csv(f, index_col=False)
     df = df.iloc[:, 1:].drop(columns=['url'])
-    X = df.iloc[:, 1:]
-    y = df.iloc[:, 0]
-    X = pd.DataFrame.to_numpy(X)
-    y = pd.DataFrame.to_numpy(y)
+    df_X = df.iloc[:, 1:]
+    df_y = df.iloc[:, 0]
+    X = pd.DataFrame.to_numpy(df_X)
+    y = pd.DataFrame.to_numpy(df_y)
     f.close()
-    return X, y
+    return df_X, df_y, X, y
 
 
 def plot_confusion_matrix(cm_input, title='Normalized Confusion Matrix'):
@@ -47,7 +49,7 @@ def plot_confusion_matrix(cm_input, title='Normalized Confusion Matrix'):
 if __name__ == "__main__":
     file = '../final_data.csv'
 
-    X, y = load_raw_dataset(filename=file)
+    df_X, df_y, X, y = load_raw_dataset(filename=file)
 
     for i in range(len(y)):
         if y[i] == 'legitimate':
@@ -66,18 +68,31 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=0)
 
-    print('\n------Decision Tree------\n')
-
-    clf1 = DecisionTreeClassifier()
-    clf1.fit(X_train, y_train)
-
-    y_pred = clf1.predict(X_test)
-
-    print('\nDecision Tree accuracy score %s%%\n' % accuracy_score(y_test, y_pred))
-
-    plot_confusion_matrix(cm_input=confusion_matrix(y_test, y_pred), title="Decision Tree Confusion Matrix")
-
-    print(classification_report(y_test, y_pred))
+    # print('\n------Decision Tree------\n')
+    #
+    # clf1 = DecisionTreeClassifier()
+    # clf1.fit(X_train, y_train)
+    #
+    # y_pred = clf1.predict(X_test)
+    #
+    # print('\nDecision Tree accuracy score %s%%\n' % accuracy_score(y_test, y_pred))
+    #
+    # plot_confusion_matrix(cm_input=confusion_matrix(y_test, y_pred), title="Decision Tree Confusion Matrix")
+    #
+    # print(classification_report(y_test, y_pred))
+    #
+    # feat_dict = {}
+    # for col, val in sorted(zip(df_X.columns, clf1.feature_importances_), key=lambda x: x[1], reverse=True):
+    #     feat_dict[col] = val
+    #
+    # feat_df = pd.DataFrame({'Feature': feat_dict.keys(), 'Importance': feat_dict.values()})
+    #
+    # values = feat_df.Importance
+    # idx = feat_df.Feature
+    # plt.figure(figsize=(10, 8))
+    # clrs = ['green' if (x < max(values)) else 'red' for x in values]
+    # sns.barplot(y=idx, x=values, palette=clrs).set(title='Feature Importance')
+    # plt.show()
 
     print('\n------SVM (linear)------\n')
 
@@ -92,15 +107,29 @@ if __name__ == "__main__":
 
     print(classification_report(y_test, y_pred))
 
-    print('\n------SVM (rbf)------\n')
+    feat_dict = {}
+    coef = clf2.coef_.reshape(22,)
+    for col, val in sorted(zip(df_X.columns, coef), key=lambda x: x[1], reverse=True):
+        feat_dict[col] = val
 
-    clf3 = SVC()
-    clf3.fit(X_train, y_train)
+    feat_df = pd.DataFrame({'Feature': feat_dict.keys(), 'Coefficient': feat_dict.values()})
 
-    y_pred = clf3.predict(X_test)
+    values = feat_df.Coefficient
+    idx = feat_df.Feature
+    plt.figure(figsize=(10, 8))
+    clrs = ['green' if (x < max(values)) else 'red' for x in values]
+    sns.barplot(y=idx, x=values, palette=clrs).set(title='Feature Importance')
+    plt.show()
 
-    print('\nSVM (rbf) accuracy score %s%%\n' % accuracy_score(y_test, y_pred))
-
-    plot_confusion_matrix(cm_input=confusion_matrix(y_test, y_pred), title="SVM (rbf) Confusion Matrix")
-
-    print(classification_report(y_test, y_pred))
+    # print('\n------SVM (rbf)------\n')
+    #
+    # clf3 = SVC()
+    # clf3.fit(X_train, y_train)
+    #
+    # y_pred = clf3.predict(X_test)
+    #
+    # print('\nSVM (rbf) accuracy score %s%%\n' % accuracy_score(y_test, y_pred))
+    #
+    # plot_confusion_matrix(cm_input=confusion_matrix(y_test, y_pred), title="SVM (rbf) Confusion Matrix")
+    #
+    # print(classification_report(y_test, y_pred))
